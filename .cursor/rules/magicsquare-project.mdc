@@ -1,0 +1,28 @@
+---
+description: MagicSquare 프로젝트 목표, 구조, 에이전트 작업 흐름
+alwaysApply: true
+---
+
+# MagicSquare 프로젝트 규칙
+
+## 프로젝트 목표
+- ECB 아키텍처와 Dual-Track TDD를 준수하여 MagicSquare 도메인을 구현한다.
+
+## 필수 디렉터리 구조
+- 루트 패키지 이름은 `MagicSquare`로 유지한다.
+- 최상위 필수 디렉터리는 `boundary`, `control`, `entity`, `tests`이다.
+- 권장 하위 구조:
+  - `boundary`: `cli`, `api`
+  - `control`: `use_cases`
+  - `entity`: `models`, `rules`
+  - `tests`: `boundary`, `control`, `entity`
+
+## 에이전트 작업 흐름
+- 코딩 전에 관련 테스트를 먼저 읽고 테스트 의도를 명확히 파악한다.
+- 코딩 전에 어떤 ECB 레이어를 변경하는지 명시한다.
+- 코딩 중에는 ECB 레이어 경계를 위반하지 않는다.
+- 코딩 중에는 타입 힌트 없는 함수를 만들지 않는다.
+- 코딩 중에는 TDD 단계를 따르고 RED 확인 전 구현하지 않는다.
+- 코딩 후에는 `pytest`를 실행해 회귀를 확인한다.
+- 코딩 후 TDD 위반이 감지되면 수정 우선순위를 높인다.
+- 코딩 후 테스트 약화 없이 커버리지 80% 이상을 유지한다.
