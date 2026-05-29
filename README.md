@@ -184,13 +184,13 @@ Magic_Square_XX/
 > 각 항목은 RED(실패 테스트 작성) 완료 시 체크합니다.
 
 ### Track A — UI / Boundary 테스트
-- [ ] TC-A-01: grid=None 입력 → 실패 결과 반환 (Happy Path of Failure)
-- [ ] TC-A-02: code가 정확히 "INVALID_SIZE" 문자열인지 검증
-- [ ] TC-A-03: message가 "Grid must be 4x4." 와 문자 단위 동일한지 검증
+- [x] TC-A-01: grid=None 입력 → 실패 결과 반환 (Happy Path of Failure)
+- [x] TC-A-02: code가 정확히 "INVALID_SIZE" 문자열인지 검증
+- [x] TC-A-03: message가 "Grid must be 4x4." 와 문자 단위 동일한지 검증
 - [ ] TC-A-04: grid=None 시 Domain 진입점 0회 호출 (mock/spy 검증)
 - [ ] TC-A-05: grid=[] 빈 리스트 → 실패 결과 반환
 - [ ] TC-A-06: grid=3×4 크기 불일치 → 실패 결과 반환
-- [ ] TC-A-07: 반환 객체 타입이 지정 실패 결과 구조체인지 검증
+- [x] TC-A-07: 반환 객체 타입이 지정 실패 결과 구조체인지 검증
 
 ### Track B — Domain / Logic 테스트
 - [ ] TC-B-01: resolve()가 None grid를 직접 받지 않음을 격리 검증
@@ -209,4 +209,204 @@ Magic_Square_XX/
 
 ---
 
-*최초 작성: 2026-05-28*
+## GREEN 단계 To-Do 리스트
+
+> **기준 AC:** AC-FR-01-01 (`grid=None` → `INVALID_SIZE`, `message="Grid must be 4x4."`)  
+> **원칙:** RED 묶음당 GREEN 커밋 1개 · 최소 구현만 · `tests/` 수정 금지  
+> **상세 계획:** `docs/test_plan.md` · 테스트 상수: `tests/conftest.py`
+
+### 공통 사전 체크
+
+- [ ] `pytest.ini`의 `pythonpath = src` 확인
+- [ ] GREEN 커밋 전 해당 묶음만 실행해 RED/GREEN 상태 확인
+- [ ] `tests/` 수정 없음 (assert 약화·skip 금지)
+- [ ] 커밋 메시지에 RED 묶음 ID 명시 (예: `green: RED-A null anchor`)
+
+### 진행 요약
+
+| GREEN | RED | 테스트 수 | 핵심 구현 | 커밋 |
+|:---:|---|:---:|---|:---:|
+| **GREEN-1** | RED-A | 16 | `grid is None` + DTO + 계약 | ✓ |
+| **GREEN-2** | RED-B | 10 | 형상 검증 (`[]`, `[[]]*4`, 3×4/4×3/5×5) | 1 |
+| **GREEN-3** | RED-C | 17 | `validate_and_solve()` 단선 | 1 |
+
+---
+
+### GREEN-1 — RED-A → G-01~G-04 (null 앵커 · 16 tests)
+
+#### 구현 범위 (최소)
+
+- [x] `src/boundary/models/validation_failure_result.py` — `ValidationFailureResult` pydantic DTO
+  - [x] `code`, `message`, `is_failure`, `is_success` 필드
+- [x] `src/boundary/constants.py` — `INVALID_SIZE_CODE`, `INVALID_SIZE_MESSAGE`
+- [x] `src/boundary/validators/boundary_validator.py`
+  - [x] `grid is None` → `ValidationFailureResult` 반환
+  - [x] `code="INVALID_SIZE"`, `message="Grid must be 4x4."` (문자 단위 동일)
+
+#### G-01 — null 실패 반환 (5)
+
+- [x] `TestNormalFailureReturn::test_none_grid_returns_failure_result_not_success`
+- [x] `TestNormalFailureReturn::test_none_grid_returns_non_null_failure_object`
+- [x] `TestNormalFailureReturn::test_none_grid_failure_exposes_code_field`
+- [x] `TestNormalFailureReturn::test_none_grid_failure_exposes_message_field`
+- [x] `TestNormalFailureReturn::test_none_grid_does_not_return_solver_success_shape`
+
+#### G-02 — null code 계약 (3)
+
+- [x] `TestInvalidSizeCode::test_none_grid_code_is_invalid_size_string`
+- [x] `TestInvalidSizeCode::test_none_grid_code_is_not_err_bnd_prefix`
+- [x] `TestInvalidSizeCode::test_invalid_size_code_length_is_twelve_chars`
+
+#### G-03 — null message 계약 (3)
+
+- [x] `TestMessageExactMatch::test_none_grid_message_equals_prd_invalid_size_literal`
+- [x] `TestMessageExactMatch::test_none_grid_message_is_not_substring_match_only`
+- [x] `TestMessageExactMatch::test_none_grid_message_length_matches_prd_literal`
+
+#### G-04 — DTO 구조 (5)
+
+- [x] `TestFailureResultStructure::test_none_grid_result_is_validation_failure_model`
+- [x] `TestFailureResultStructure::test_none_grid_result_is_pydantic_base_model`
+- [x] `TestFailureResultStructure::test_failure_result_model_declares_code_and_message_fields`
+- [x] `TestFailureResultStructure::test_failure_result_model_declares_is_failure_flag`
+- [x] `TestFailureResultStructure::test_none_grid_result_serializes_code_and_message`
+
+#### 검증 명령
+
+```bash
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestNormalFailureReturn -v
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestInvalidSizeCode -k "none_grid" -v
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestMessageExactMatch -k "none_grid" -v
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestFailureResultStructure -v
+```
+
+#### GREEN-1 완료 조건
+
+- [x] 위 16건 전부 PASS
+- [x] `git commit` — `green: RED-A null anchor (G-01~G-04)`
+
+---
+
+### GREEN-2 — RED-B → G-05~G-09 (형상 전체 · 10 tests)
+
+#### 구현 범위 (최소)
+
+- [ ] `BoundaryValidator._has_invalid_shape()` 확장
+  - [ ] `grid == []` → 실패
+  - [ ] `len(grid) != 4` → 실패
+  - [ ] `any(len(row) != 4)` → 실패
+- [ ] 형상 위반 시에도 동일 `INVALID_SIZE` / `"Grid must be 4x4."` 반환
+- [ ] GREEN-1 null 분기 회귀 없음 확인
+
+#### G-05 — 빈 리스트 `[]` (3)
+
+- [ ] `TestBoundaryValues::test_empty_list_grid_returns_failure_result`
+- [ ] `TestMessageExactMatch::test_empty_list_message_equals_invalid_size_literal`
+- [ ] `TestInvalidSizeCode::test_shape_edge_grids_code_is_invalid_size[grid_empty_list]`
+
+#### G-06 — 0열 4행 `[[]]*4` (2)
+
+- [ ] `TestBoundaryValues::test_four_empty_rows_grid_returns_failure_result`
+- [ ] `TestInvalidSizeCode::test_shape_edge_grids_code_is_invalid_size[grid_four_rows_zero_cols]`
+
+#### G-07 — 3×4 (3)
+
+- [ ] `TestBoundaryValues::test_3x4_grid_returns_failure_result`
+- [ ] `TestMessageExactMatch::test_shape_mismatch_grids_share_invalid_size_message`
+- [ ] `TestInvalidSizeCode::test_shape_edge_grids_code_is_invalid_size[grid_3x4]`
+
+#### G-08 — 4×3 (1)
+
+- [ ] `TestBoundaryValues::test_4x3_grid_returns_failure_result`
+
+#### G-09 — 5×5 (1)
+
+- [ ] `TestBoundaryValues::test_5x5_grid_returns_failure_result`
+
+#### 검증 명령
+
+```bash
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestBoundaryValues -v
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestMessageExactMatch -k "empty_list or shape_mismatch" -v
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestInvalidSizeCode::test_shape_edge_grids_code_is_invalid_size -v
+```
+
+#### GREEN-2 완료 조건
+
+- [ ] 위 10건 전부 PASS
+- [ ] GREEN-1 회귀 없음 (null 16건 재확인)
+- [ ] `git commit` — `green: RED-B shape validation (G-05~G-09)`
+
+---
+
+### GREEN-3 — RED-C → G-10~G-11 (격리 전체 · 17 tests)
+
+#### 구현 범위 (최소)
+
+- [ ] `src/boundary/facade.py` — `validate_and_solve()`
+  - [ ] `BoundaryValidator().validate(grid)` 선행
+  - [ ] `validation.is_failure` → 즉시 반환 (`Solver.resolve()` 미호출)
+  - [ ] 실패 시 `code`, `message`, `is_failure` 보존
+- [ ] `control.use_cases.solver.Solver` — import만 존재 (mock 대상)
+- [ ] **금지:** `resolve()` 내부 Domain 로직 구현
+
+#### G-10 — Facade null 단선 (11)
+
+- [ ] `TestIsolationGuard::test_none_grid_resolve_called_zero_times`
+- [ ] `TestIsolationGuard::test_none_grid_resolve_assert_not_called_explicit`
+- [ ] `TestBoundaryHandlesNoneBeforeResolve::test_none_grid_returns_failure_without_resolve_side_effects`
+- [ ] `TestBoundaryHandlesNoneBeforeResolve::test_none_grid_resolve_never_receives_none_argument`
+- [ ] `TestBoundaryHandlesNoneBeforeResolve::test_boundary_failure_path_does_not_delegate_to_control`
+- [ ] `TestBoundaryHandlesNoneBeforeResolve::test_none_grid_resolve_side_effect_would_fail_if_called`
+- [ ] `TestBoundaryHandlesNoneBeforeResolve::test_none_grid_message_set_before_any_resolve_chance`
+- [ ] `TestResolveMockGuard::test_resolve_mock_called_once_would_fail_guard`
+- [ ] `TestResolveMockGuard::test_resolve_mock_not_called_with_any_kwargs`
+- [ ] `TestResolveMockGuard::test_invalid_shape_fixtures_never_invoke_resolve[grid_none]`
+- [ ] `TestResolveMockGuard::test_resolve_mock_return_value_not_consumed_on_none`
+
+#### G-11 — Facade 형상 단선 (6)
+
+- [ ] `TestIsolationGuard::test_empty_list_grid_resolve_called_zero_times`
+- [ ] `TestIsolationGuard::test_four_empty_rows_resolve_called_zero_times`
+- [ ] `TestIsolationGuard::test_3x4_grid_resolve_called_zero_times`
+- [ ] `TestResolveMockGuard::test_invalid_shape_fixtures_never_invoke_resolve[grid_empty_list]`
+- [ ] `TestResolveMockGuard::test_invalid_shape_fixtures_never_invoke_resolve[grid_3x4]`
+
+#### 검증 명령
+
+```bash
+python -m pytest tests/control/test_solver_boundary_guard_ac_fr_01_01.py::TestIsolationGuard -v
+python -m pytest tests/control/test_solver_boundary_guard_ac_fr_01_01.py::TestBoundaryHandlesNoneBeforeResolve -v
+python -m pytest tests/control/test_solver_boundary_guard_ac_fr_01_01.py::TestResolveMockGuard -v
+```
+
+#### GREEN-3 완료 조건
+
+- [ ] 위 17건 전부 PASS
+- [ ] GREEN-1·GREEN-2 회귀 없음
+- [ ] `git commit` — `green: RED-C facade isolation (G-10~G-11)`
+
+---
+
+### 최종 통합 확인 (3 GREEN 커밋 후)
+
+```bash
+python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py tests/control/test_solver_boundary_guard_ac_fr_01_01.py -v --tb=short
+```
+
+- [ ] Boundary 구현 테스트 31건 PASS
+- [ ] Control 격리 테스트 17건 PASS
+- [ ] **합계 48건** (구현 대상) PASS
+
+### GREEN 대상 아님 (참고)
+
+아래는 RED 커밋에 포함되지만 **별도 구현 없이** 통과하는 메타/범위 테스트이다.
+
+| 묶음 | 테스트 | 비고 |
+|---|---|---|
+| RED-A | `TestScopeRestriction` (5) | conftest 상수·fixture 문서화 |
+| RED-C | `TestScopeExcludesDownstreamAcs` (5) | 모듈 소스 범위 검증 |
+
+---
+
+*최초 작성: 2026-05-28 · GREEN To-Do 추가: 2026-05-29*
