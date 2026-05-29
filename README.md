@@ -184,13 +184,13 @@ Magic_Square_XX/
 > 각 항목은 RED(실패 테스트 작성) 완료 시 체크합니다.
 
 ### Track A — UI / Boundary 테스트
-- [ ] TC-A-01: grid=None 입력 → 실패 결과 반환 (Happy Path of Failure)
-- [ ] TC-A-02: code가 정확히 "INVALID_SIZE" 문자열인지 검증
-- [ ] TC-A-03: message가 "Grid must be 4x4." 와 문자 단위 동일한지 검증
+- [x] TC-A-01: grid=None 입력 → 실패 결과 반환 (Happy Path of Failure)
+- [x] TC-A-02: code가 정확히 "INVALID_SIZE" 문자열인지 검증
+- [x] TC-A-03: message가 "Grid must be 4x4." 와 문자 단위 동일한지 검증
 - [ ] TC-A-04: grid=None 시 Domain 진입점 0회 호출 (mock/spy 검증)
 - [ ] TC-A-05: grid=[] 빈 리스트 → 실패 결과 반환
 - [ ] TC-A-06: grid=3×4 크기 불일치 → 실패 결과 반환
-- [ ] TC-A-07: 반환 객체 타입이 지정 실패 결과 구조체인지 검증
+- [x] TC-A-07: 반환 객체 타입이 지정 실패 결과 구조체인지 검증
 
 ### Track B — Domain / Logic 테스트
 - [ ] TC-B-01: resolve()가 None grid를 직접 받지 않음을 격리 검증
@@ -226,7 +226,7 @@ Magic_Square_XX/
 
 | GREEN | RED | 테스트 수 | 핵심 구현 | 커밋 |
 |:---:|---|:---:|---|:---:|
-| **GREEN-1** | RED-A | 16 | `grid is None` + DTO + 계약 | 1 |
+| **GREEN-1** | RED-A | 16 | `grid is None` + DTO + 계약 | ✓ |
 | **GREEN-2** | RED-B | 10 | 형상 검증 (`[]`, `[[]]*4`, 3×4/4×3/5×5) | 1 |
 | **GREEN-3** | RED-C | 17 | `validate_and_solve()` 단선 | 1 |
 
@@ -236,40 +236,40 @@ Magic_Square_XX/
 
 #### 구현 범위 (최소)
 
-- [ ] `src/boundary/models/validation_failure_result.py` — `ValidationFailureResult` pydantic DTO
-  - [ ] `code`, `message`, `is_failure`, `is_success` 필드
-- [ ] `src/boundary/constants.py` — `INVALID_SIZE_CODE`, `INVALID_SIZE_MESSAGE`
-- [ ] `src/boundary/validators/boundary_validator.py`
-  - [ ] `grid is None` → `ValidationFailureResult` 반환
-  - [ ] `code="INVALID_SIZE"`, `message="Grid must be 4x4."` (문자 단위 동일)
+- [x] `src/boundary/models/validation_failure_result.py` — `ValidationFailureResult` pydantic DTO
+  - [x] `code`, `message`, `is_failure`, `is_success` 필드
+- [x] `src/boundary/constants.py` — `INVALID_SIZE_CODE`, `INVALID_SIZE_MESSAGE`
+- [x] `src/boundary/validators/boundary_validator.py`
+  - [x] `grid is None` → `ValidationFailureResult` 반환
+  - [x] `code="INVALID_SIZE"`, `message="Grid must be 4x4."` (문자 단위 동일)
 
 #### G-01 — null 실패 반환 (5)
 
-- [ ] `TestNormalFailureReturn::test_none_grid_returns_failure_result_not_success`
-- [ ] `TestNormalFailureReturn::test_none_grid_returns_non_null_failure_object`
-- [ ] `TestNormalFailureReturn::test_none_grid_failure_exposes_code_field`
-- [ ] `TestNormalFailureReturn::test_none_grid_failure_exposes_message_field`
-- [ ] `TestNormalFailureReturn::test_none_grid_does_not_return_solver_success_shape`
+- [x] `TestNormalFailureReturn::test_none_grid_returns_failure_result_not_success`
+- [x] `TestNormalFailureReturn::test_none_grid_returns_non_null_failure_object`
+- [x] `TestNormalFailureReturn::test_none_grid_failure_exposes_code_field`
+- [x] `TestNormalFailureReturn::test_none_grid_failure_exposes_message_field`
+- [x] `TestNormalFailureReturn::test_none_grid_does_not_return_solver_success_shape`
 
 #### G-02 — null code 계약 (3)
 
-- [ ] `TestInvalidSizeCode::test_none_grid_code_is_invalid_size_string`
-- [ ] `TestInvalidSizeCode::test_none_grid_code_is_not_err_bnd_prefix`
-- [ ] `TestInvalidSizeCode::test_invalid_size_code_length_is_twelve_chars`
+- [x] `TestInvalidSizeCode::test_none_grid_code_is_invalid_size_string`
+- [x] `TestInvalidSizeCode::test_none_grid_code_is_not_err_bnd_prefix`
+- [x] `TestInvalidSizeCode::test_invalid_size_code_length_is_twelve_chars`
 
 #### G-03 — null message 계약 (3)
 
-- [ ] `TestMessageExactMatch::test_none_grid_message_equals_prd_invalid_size_literal`
-- [ ] `TestMessageExactMatch::test_none_grid_message_is_not_substring_match_only`
-- [ ] `TestMessageExactMatch::test_none_grid_message_length_matches_prd_literal`
+- [x] `TestMessageExactMatch::test_none_grid_message_equals_prd_invalid_size_literal`
+- [x] `TestMessageExactMatch::test_none_grid_message_is_not_substring_match_only`
+- [x] `TestMessageExactMatch::test_none_grid_message_length_matches_prd_literal`
 
 #### G-04 — DTO 구조 (5)
 
-- [ ] `TestFailureResultStructure::test_none_grid_result_is_validation_failure_model`
-- [ ] `TestFailureResultStructure::test_none_grid_result_is_pydantic_base_model`
-- [ ] `TestFailureResultStructure::test_failure_result_model_declares_code_and_message_fields`
-- [ ] `TestFailureResultStructure::test_failure_result_model_declares_is_failure_flag`
-- [ ] `TestFailureResultStructure::test_none_grid_result_serializes_code_and_message`
+- [x] `TestFailureResultStructure::test_none_grid_result_is_validation_failure_model`
+- [x] `TestFailureResultStructure::test_none_grid_result_is_pydantic_base_model`
+- [x] `TestFailureResultStructure::test_failure_result_model_declares_code_and_message_fields`
+- [x] `TestFailureResultStructure::test_failure_result_model_declares_is_failure_flag`
+- [x] `TestFailureResultStructure::test_none_grid_result_serializes_code_and_message`
 
 #### 검증 명령
 
@@ -282,8 +282,8 @@ python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py::TestFail
 
 #### GREEN-1 완료 조건
 
-- [ ] 위 16건 전부 PASS
-- [ ] `git commit` — `green: RED-A null anchor (G-01~G-04)`
+- [x] 위 16건 전부 PASS
+- [x] `git commit` — `green: RED-A null anchor (G-01~G-04)`
 
 ---
 
