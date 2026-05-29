@@ -209,4 +209,48 @@ Magic_Square_XX/
 
 ---
 
+## REFACTOR 단계 To-Do 리스트
+
+> 기준: `.cursor/rules/magicsquare-tdd-testing.mdc` — **모든 테스트 통과 후** 내부 구조만 개선, 기능 변경 금지.
+> 테스트 없이 리팩터링을 시작하면 회귀를 검증할 안전망이 없으므로, 각 항목은 선행 GREEN 테스트 완료 후 진행한다.
+
+### 선행 조건 (REFACTOR 전 GREEN)
+
+- [ ] RF-P0: DEF-003 수정 — `test_isolation_module_does_not_patch_blank_finder` → control 21/21 GREEN
+- [ ] RF-P1: `boundary_validator` valid 4×4 success path — 신규 GREEN 테스트 작성 후 `NotImplementedError` 제거 (DEF-004)
+- [ ] RF-P2: `tests/entity/test_d_sol.py` D-SOL-01~04 GREEN — `Solver.resolve()` 로직 구현/리팩터 선행
+- [ ] RF-P3: `tests/control/test_solver.py` 신규 작성 — `Solver.resolve(valid_4x4)` 계약 단위 테스트
+
+### `src/boundary/validators/boundary_validator.py`
+
+- [ ] RF-BV-01: `_has_invalid_shape` private 메서드 추출·정리 (null/형상 실패 동작 불변)
+- [ ] RF-BV-02: 실패 DTO 생성 로직 정리 (`ValidationFailureResult` 팩토리 또는 헬퍼 추출)
+- [ ] RF-BV-03: valid 4×4 → success sentinel 반환 (RF-P1 GREEN 후, facade 연동)
+
+### `src/control/use_cases/solver.py`
+
+- [ ] RF-SL-01: `tests/entity/test_d_sol.py` → `tests/control/` 이동, `solution` → `Solver.resolve` import 정렬
+- [ ] RF-SL-02: `Solver.resolve()` 내부 구조 리팩터 (RF-P2 GREEN 후, D-SOL-01~04 통과 유지)
+- [ ] RF-SL-03: facade 통합 테스트 — valid 4×4 → boundary success → `resolve` 1회 호출
+
+### 연관 — `src/boundary/facade.py`
+
+- [ ] RF-FC-01: `validate_and_solve` 반환 타입 union 도입 (`ValidationFailureResult | SolveSuccessResult`, RF-BV-03 후)
+- [ ] RF-FC-02: orchestration 정리 — boundary success 분기에서만 `Solver.resolve` 호출 (RF-BV-03 후)
+
+### 구조·품질 (기능 불변)
+
+- [ ] RF-001: `INVALID_SIZE_*` 상수 중복 제거 — `tests/conftest.py`가 `boundary.constants` import
+- [ ] RF-002: 패키지 레이아웃 통일 — `entity/`(root) vs `src/boundary|control` → pytest.ini·test_plan·import 일괄 정렬
+- [ ] RF-003: `entity/models/user.py` ECB 예제 — entity services GREEN 후 `examples/` 분리 검토
+- [ ] RF-004: 도메인 상수 중앙화 — S=34, 1..16 → `entity/constants.py` (`MAGIC_SUM`, `MIN_CELL`, `MAX_CELL`)
+
+### REFACTOR 완료 검증
+
+- [ ] RF-V01: `pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py` 회귀 통과
+- [ ] RF-V02: `pytest tests/control/` 전체 GREEN (DEF-003 포함)
+- [ ] RF-V03: 커버리지 80% 이상 유지 또는 향상
+
+---
+
 *최초 작성: 2026-05-28*
