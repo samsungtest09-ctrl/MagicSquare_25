@@ -437,46 +437,197 @@ python -m pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py tests/con
 
 ## REFACTOR 단계 To-Do 리스트
 
-> 기준: `.cursor/rules/magicsquare-tdd-testing.mdc` — **모든 테스트 통과 후** 내부 구조만 개선, 기능 변경 금지.
-> 테스트 없이 리팩터링을 시작하면 회귀를 검증할 안전망이 없으므로, 각 항목은 선행 GREEN 테스트 완료 후 진행한다.
+> **기준:** `.cursor/rules/magicsquare-tdd-testing.mdc` — **모든 테스트 통과 후** 내부 구조만 개선, 기능 변경 금지.
+> **프로그램:** Dual-Track UI + Logic TDD · Safe Refactoring · Golden Master · ECB — 다중 커밋(semantic-preserving), 커밋당 Prompt A(단일 커밋) 규칙.
+> **SSOT:** `Report/11.magic_square_code_review_refactor_todo_report.md` · MagicSquare_1004 Report/14~15 로드맵(본 프로젝트 경로에 맞게 매핑).
 
-### 선행 조건 (REFACTOR 전 GREEN)
+### 프로그램 목적 (이번 작업 범위)
 
-- [ ] RF-P0: DEF-003 수정 — `test_isolation_module_does_not_patch_blank_finder` → control 21/21 GREEN
-- [ ] RF-P1: `boundary_validator` valid 4×4 success path — 신규 GREEN 테스트 작성 후 `NotImplementedError` 제거 (DEF-004)
-- [ ] RF-P2: `tests/entity/test_d_sol.py` D-SOL-01~04 GREEN — `Solver.resolve()` 로직 구현/리팩터 선행
-- [ ] RF-P3: `tests/control/test_solver.py` 신규 작성 — `Solver.resolve(valid_4x4)` 계약 단위 테스트
+- 코드 품질·중복 제거·ECB/SRP 강화·invariant 가독성·회귀 안전성
+- **금지:** 기능 추가·계약 변경·출력 변경·architecture redesign
 
-### `src/boundary/validators/boundary_validator.py`
+### 고정 계약 (전 Phase 불변)
 
-- [ ] RF-BV-01: `_has_invalid_shape` private 메서드 추출·정리 (null/형상 실패 동작 불변)
-- [ ] RF-BV-02: 실패 DTO 생성 로직 정리 (`ValidationFailureResult` 팩토리 또는 헬퍼 추출)
-- [ ] RF-BV-03: valid 4×4 → success sentinel 반환 (RF-P1 GREEN 후, facade 연동)
+| 항목 | 내용 |
+|---|---|
+| **입력** | 4×4 `int[][]`, `0`=빈칸(정확히 2), 값 `0\|1~16`, 0 제외 중복 금지, row-major 첫 빈칸 |
+| **출력** | `int[6]` `[r1,c1,n1,r2,c2,n2]`, 1-index, 작은 수→첫 빈칸, 실패 시 reverse fallback |
+| **Error** | E001~E007 envelope 불변 |
+| **Golden Master** | normal/reverse success, E002, E005, E006 시나리오 |
 
-### `src/control/use_cases/solver.py`
+---
 
-- [ ] RF-SL-01: `tests/entity/test_d_sol.py` → `tests/control/` 이동, `solution` → `Solver.resolve` import 정렬
-- [ ] RF-SL-02: `Solver.resolve()` 내부 구조 리팩터 (RF-P2 GREEN 후, D-SOL-01~04 통과 유지)
-- [ ] RF-SL-03: facade 통합 테스트 — valid 4×4 → boundary success → `resolve` 1회 호출
+### Phase 0 — REFACTOR 진입 게이트 (선행 필수)
 
-### 연관 — `src/boundary/facade.py`
+> 아래 미충족 시 Wave 1 이후 진행 금지.
 
-- [ ] RF-FC-01: `validate_and_solve` 반환 타입 union 도입 (`ValidationFailureResult | SolveSuccessResult`, RF-BV-03 후)
-- [ ] RF-FC-02: orchestration 정리 — boundary success 분기에서만 `Solver.resolve` 호출 (RF-BV-03 후)
+| 게이트 | 기준 | 현재 (2026-05-29) |
+|--------|------|-------------------|
+| **G-01** | `pytest tests/` 전체 GREEN (RED skeleton 해소) | ❌ `collect_ignore` 8파일·RED stub 잔존 |
+| **G-02** | GM-1 matched | ⬜ `tests/test_golden_master_magic_square.py` 검증 필요 |
+| **G-03** | U-FLOW-02(5), U-OUT-02~03, U-IN-04~08 GREEN | ❌ U-IN-04/05·U-OUT·U-FLOW-02 ignore 중 |
+| **G-04** | D-SOL-03, SC-CTL-002~004 GREEN | ❌ D-SOL stub; SC-CTL-002~004 미작성 |
+| **G-05** | (P1) `tests/boundary/test_main_window.py` 또는 GUI 계약 테스트 | ❌ Wave 2 선행 |
 
-### 구조·품질 (기능 불변)
+**검증 명령:**
 
-- [ ] RF-001: `INVALID_SIZE_*` 상수 중복 제거 — `tests/conftest.py`가 `boundary.constants` import
+```bash
+python -m pytest tests/ -v
+python -m pytest tests/test_golden_master_magic_square.py -v
+python -m pytest -m golden_master -v
+```
+
+---
+
+### Phase 0 선행 로드맵 (green_phase)
+
+```
+Phase 0-A (RED stub → assert) → Phase 0-B (U-OUT-03 + D-SOL-02) → Phase 0-C (SC-CTL-002~004) → G-01~G-04 → Wave 1
+```
+
+| 단계 | 작업 | 예상 커밋 | Track |
+|------|------|-----------|-------|
+| **0-A** | `collect_ignore` 해제 + RED skeleton full assert (U-FLOW-02, U-IN-04/05, U-OUT, D-VAL, D-LOC/MIS/SOL stub) | 1~2 | green_phase (테스트) |
+| **0-B** | DEF-003 수정 (RF-P0) + U-OUT-03 E006 매핑 + D-SOL-02 G2 fixture | 2 | green_phase |
+| **0-C** | `tests/control/test_solver.py` — SC-CTL-002~004 신규 | 1 | green_phase (Control) |
+
+- [ ] **RF-P0:** DEF-003 수정 — `test_isolation_module_does_not_patch_blank_finder` → control 21/21 GREEN
+- [ ] **RF-P1:** `boundary_validator` valid 4×4 success path — 신규 GREEN 테스트 후 `NotImplementedError` 제거 (DEF-004)
+- [ ] **RF-P2:** `tests/entity/test_d_sol.py` D-SOL-01~04 GREEN — `Solver.resolve()` 구현 선행
+- [ ] **RF-P3:** `tests/control/test_solver.py` 신규 — `Solver.resolve(valid_4x4)` + SC-CTL-002~004 계약
+
+---
+
+### Wave 1 — P0 계약·SSOT (커밋 C1~C4)
+
+> **전제:** Phase 0 완료 · Wave 1 착수 전 G-01~G-04 재확인.
+
+| 커밋 | ID | Track | 작업 | 대상 파일 | 검증 Test ID |
+|------|-----|-------|------|-----------|--------------|
+| C1 | **RF-01** | Boundary | `ValidationSuccessResult` 도입, `NotImplementedError` 제거 | `boundary_validator.py`, `facade.py` | U-IN-*, U-FLOW-02, AC-FR-01-01 |
+| C2 | **RF-02** | Boundary | E006 ErrorMapper extract | `facade.py`, `gui/magic_square_app.py` | U-OUT-03, GM G3 |
+| C3 | **RF-03** | Control | `SolutionResult.values` SSOT (Solver 반환값 무시 제거) | `control/use_cases/solver.py` | SC-CTL-002~003, GM G1/G2 |
+| C4 | **RF-04** | Control+Entity | locate/find 중복 정리 | `solver.py` + entity services | SC-CTL-004, D-SOL-* |
+
+**Wave 1 세부 (기존 ID 매핑):**
+
+- [ ] RF-BV-03 / RF-P1: valid 4×4 → success sentinel (C1 선행 GREEN)
+- [ ] RF-FC-01: `validate_and_solve` 반환 union (`ValidationFailureResult \| SolveSuccessResult`, C1 후)
+- [ ] RF-FC-02: orchestration — boundary success 분기에서만 `Solver.resolve` 호출
+- [ ] RF-SL-01: `test_d_sol.py` → `tests/control/` 이동, import 정렬
+- [ ] RF-SL-02: `Solver.resolve()` 내부 구조 리팩터 (RF-P2 GREEN 후)
+- [ ] RF-SL-03: facade 통합 — valid 4×4 → boundary success → `resolve` 1회
+
+**ISS-012-01 (C3 RF-03 GM 영향):** Control 수동 조립 `[2,2,7,3,3,10]` vs Solver physical `[2,2,10,3,3,7]`. C3 전 SSOT 방향 결정 → SC-CTL-001/U-OUT-01 expected 선행 수정 → C3 후 GM diff 시 Report 근거 + `--approve-golden`. approve 없이 `golden_master_expected.txt` 수정 금지.
+
+---
+
+### Wave 2 — P1 DRY·Screen (커밋 C5~C8)
+
+| 커밋 | ID | Track | 작업 | 대상 파일 | 검증 |
+|------|-----|-------|------|-----------|------|
+| C5 | **RF-05** | Boundary | `_failure()` extract | `boundary_validator.py` | U-IN-*, AC-FR-01-01 |
+| C6 | **RF-06** | Screen | `ResultPresenter` 정리 | `gui/result_presenter.py`, `magic_square_app.py` | GUI 계약 테스트 |
+| C7 | **RF-07** | Screen | G1 fixture·상수 SSOT | `gui/constants.py` | GM, Screen |
+| C8 | **RF-08** | Screen | `_init_ui()` extract method | `gui/magic_square_app.py` | Screen |
+
+- [ ] RF-BV-01: `_has_invalid_shape` private 메서드 추출·정리 (C5와 중복 시 C5에 통합)
+- [ ] RF-BV-02: 실패 DTO 생성 로직 정리 (= RF-05)
+- [ ] **G-05:** `tests/boundary/test_main_window.py` 또는 GUI 계약 테스트 신규 (Wave 2 선행)
+
+---
+
+### Wave 3 — P2 Entity 품질 (커밋 C9~C12)
+
+> **전제:** Wave 1 완료 · GREEN·GM 유지. **금지:** Wave 1 미완료 시 Entity R-L* 선행.
+
+| 커밋 | ID | Track | 작업 | 검증 |
+|------|-----|-------|------|------|
+| C9 | **R-L3** | Entity | `MATRIX_SIZE`, magic constant 함수 | D-VAL-* |
+| C10 | **R-L2** | Entity | `sumRow` / `sumCol` / `sumDiag` | D-VAL-* |
+| C11 | **R-L1** | Entity | Coordinate VO 통일 | D-LOC-*, D-SOL-* |
+| C12 | **R-L4** | Entity | `tryPlacement(order)` extract | D-SOL-* |
+
+- [ ] RF-004: 도메인 상수 중앙화 — `entity/constants.py` (`MAGIC_SUM`, `MIN_CELL`, `MAX_CELL`) (R-L3와 통합 검토)
+
+---
+
+### Wave 4 — P2 Boundary polish (커밋 C13~C14)
+
+| 커밋 | ID | Track | 작업 | 검증 |
+|------|-----|-------|------|------|
+| C13 | **R-U2** | Boundary | Error code/message 상수화 | U-OUT-*, GM |
+| C14 | **R-U3** | Boundary | ResultFormatter (1-index SSOT) | U-OUT-02, GM |
+
+- [ ] RF-001: `INVALID_SIZE_*` conftest 중복 제거 → `boundary.constants` import (R-U2와 통합 검토)
+
+---
+
+### 구조·품질 (기능 불변 · Wave 간 병행 가능)
+
 - [ ] RF-002: 패키지 레이아웃 통일 — `entity/`(root) vs `src/boundary|control` → pytest.ini·test_plan·import 일괄 정렬
 - [ ] RF-003: `entity/models/user.py` ECB 예제 — entity services GREEN 후 `examples/` 분리 검토
-- [ ] RF-004: 도메인 상수 중앙화 — S=34, 1..16 → `entity/constants.py` (`MAGIC_SUM`, `MIN_CELL`, `MAX_CELL`)
+
+---
+
+### Golden Master 특별 규칙
+
+- 매 REFACTOR 커밋 후 **GM-1 matched** 필수
+- diff 발생 시: **(a)** 버그/회귀 → 롤백 · **(b)** ISS-012-01 등 의도적 SSOT 통일 → Report 근거 기록 후 `--approve-golden`
+- approve 없이 `tests/golden_master_expected.txt` 수정 금지
+
+```bash
+# 의도적 승인 (PowerShell)
+$env:GOLDEN_MASTER_APPROVE=1
+python -m pytest -m golden_master -v
+```
+
+---
+
+### Wave별 절차 (매 커밋 반복)
+
+1. Phase 0 게이트 재확인 (해당 Wave 시작 시)
+2. 로드맵에서 **다음 1개** RF / R-L / R-U ID 선택
+3. Prompt A 절차 Step 0~5 실행
+4. GM matched 확인 후 다음 커밋
+5. Wave 완료 시 중간 보고 (아래 형식)
+
+### Wave 완료 보고 형식
+
+1. 완료 커밋 목록 (ID + 메시지)
+2. Wave별 테스트·GM 결과 요약
+3. 잔여 backlog (다음 Wave)
+4. 발견된 정합 이슈 (ISS-012-01 등) 및 GM approve 필요 여부
+5. 커버리지 80% 달성 여부
+6. ECB/SRP 개선 체크리스트 (Boundary / Control / Entity / Screen)
+
+---
+
+### 금지 (전체 프로그램)
+
+- Wave 1 미완료 시 Entity R-L* 선행 (의존성 역순)
+- 한 세션에 Wave 전체 구현 시도
+- RED 테스트를 refactor로 “우회” (`collect_ignore`·skip·assert 약화)
+- generic framework·plugin·repository 신규 도입
+
+---
+
+### 권장 실행 순서
+
+```
+RF-P0 → Phase 0-A → Phase 0-B (RF-P1~P3) → Phase 0-C
+→ C1 RF-01 → C2 RF-02 → C3 RF-03 → C4 RF-04
+→ C5~C8 (RF-05~08) → C9~C12 (R-L*) → C13~C14 (R-U*)
+→ RF-001~004, RF-V01~V03
+```
 
 ### REFACTOR 완료 검증
 
 - [ ] RF-V01: `pytest tests/boundary/test_boundary_validator_ac_fr_01_01.py` 회귀 통과
 - [ ] RF-V02: `pytest tests/control/` 전체 GREEN (DEF-003 포함)
 - [ ] RF-V03: 커버리지 80% 이상 유지 또는 향상
+- [ ] RF-V04: `pytest -m golden_master` GM-1 matched
 
 ---
 
-*최초 작성: 2026-05-28 · GREEN To-Do 추가: 2026-05-29 · REFACTOR To-Do 추가: 2026-05-29*
+*최초 작성: 2026-05-28 · GREEN To-Do: 2026-05-29 · REFACTOR To-Do: 2026-05-29 · REFACTOR 프로그램 로드맵: 2026-05-29*
