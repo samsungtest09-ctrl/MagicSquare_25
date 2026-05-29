@@ -1,0 +1,49 @@
+[GM-TC-01]
+Name: normal_success
+Input:
+16 0 2 0
+5 10 11 8
+9 6 7 12
+4 15 14 1
+Output:
+[1,2,3,1,4,13]
+
+[GM-TC-02]
+Name: reverse_success
+Input:
+0 0 2 13
+5 10 11 8
+9 6 7 12
+4 15 14 1
+Output:
+[1,1,16,1,2,3]
+
+[GM-TC-03]
+Name: invalid_blank_count
+Input:
+1 2 3 4
+5 6 7 8
+9 10 11 12
+13 14 15 0
+Error:
+INVALID_BLANK_COUNT
+
+[GM-TC-04]
+Name: duplicate_number
+Input:
+1 2 0 4
+5 6 7 8
+9 10 8 12
+13 14 15 0
+Error:
+DUPLICATE_NUMBER
+
+[GM-TC-05]
+Name: no_valid_magic_square
+Input:
+1 2 3 4
+5 6 7 8
+9 10 0 12
+13 14 15 0
+Error:
+NO_VALID_MAGIC_SQUARE
