@@ -85,3 +85,26 @@ def grid_4x3() -> list[list[int]]:
 def grid_5x5() -> list[list[int]]:
     """Five rows, five columns — shape mismatch."""
     return [[0] * 5 for _ in range(5)]
+
+
+# --- Report/09 G0~G3 SSOT placeholders (activate in GREEN) ---
+# G0: [[16,3,2,13],[5,10,11,8],[9,6,7,12],[4,15,14,1]]
+# G1: [[16,3,2,13],[5,0,11,8],[9,6,0,12],[4,15,14,1]]
+# G2: [[0,14,15,4],[9,7,6,12],[5,11,10,8],[16,2,3,13]]  # D-SOL-02 TBD
+# G3: [[1,2,3,4],[5,6,7,8],[9,10,0,12],[13,14,15,0]]
+#
+# @pytest.fixture
+# def grid_g0() -> list[list[int]]:
+#     ...
+#
+# @pytest.fixture
+# def grid_g1() -> list[list[int]]:
+#     ...
+#
+# @pytest.fixture
+# def grid_g2() -> list[list[int]]:
+#     ...
+#
+# @pytest.fixture
+# def grid_g3() -> list[list[int]]:
+#     ...
